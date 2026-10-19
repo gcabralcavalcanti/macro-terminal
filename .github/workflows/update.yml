@@ -1,10 +1,11 @@
 # Collect public data, write the AI brief, build the page and publish it on GitHub Pages.
 #
 # Data refresh: every weekday after the Brazilian close (costs nothing).
-# AI brief: only when the ANTHROPIC_API_KEY secret exists, and by default only on Mondays
+# AI (brief + 5 preset ASK questions): only when the ANTHROPIC_API_KEY secret exists, and by default only on Mondays
 #   (or on a manual run). Set the repository variable AI_DAILY=true to call it every weekday.
-#   Each call is capped (2 calls per run, Haiku, 700 output tokens). Measured on 19/10/2026: one brief =
-#   1 call, 2,431 input + 556 output tokens, about US$ 0.0005. The data steps cost nothing.
+#   Caps per run: 2 calls for the brief, 12 for ASK (Haiku, 700 output tokens each). Measured on 19/10/2026: one brief =
+#   1 call, 2,431 input + 556 output tokens, about US$ 0.0005; the 5 ASK presets about US$ 0.003.
+#   The data, alerts and newsletter steps cost nothing.
 #   To change the AI frequency, only the AI_DAILY variable (or the weekday test below) needs to change.
 # Where to add the key: repository Settings > Secrets and variables > Actions > New repository secret
 #   name ANTHROPIC_API_KEY. Pages: Settings > Pages > Source = GitHub Actions.
@@ -53,6 +54,8 @@ jobs:
           path: |
             data/cache
             data/brief.json
+            data/ask.json
+            newsletter
             recordings
             .downloads
           key: terminal-${{ github.run_id }}
@@ -73,6 +76,7 @@ jobs:
             python -m macro_terminal brief --demo
           elif [ "$MANUAL" = "true" ] || [ "$AI_DAILY" = "true" ] || [ "$(date -u +%u)" = "1" ]; then
             python -m macro_terminal brief
+            python -m macro_terminal ask
           else
             echo "AI brief runs on Mondays (set AI_DAILY=true for every weekday)."
             python -m macro_terminal brief --demo

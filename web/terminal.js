@@ -7,8 +7,8 @@
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 
-  const TABS = ["macro", "gp", "fa", "risk", "brief", "status"];
-  const TAB_ALIASES = { MACRO: "macro", ECO: "macro", GP: "gp", PRICE: "gp", CHART: "gp", FA: "fa", FUND: "fa", RISK: "risk", RV: "risk", BRIEF: "brief", AI: "brief", STATUS: "status", DATA: "status" };
+  const TABS = ["macro", "gp", "fa", "risk", "brief", "ask", "news", "status"];
+  const TAB_ALIASES = { MACRO: "macro", ECO: "macro", GP: "gp", PRICE: "gp", CHART: "gp", FA: "fa", FUND: "fa", RISK: "risk", RV: "risk", BRIEF: "brief", AI: "brief", ASK: "ask", Q: "ask", NEWS: "news", NL: "news", STATUS: "status", DATA: "status" };
   const watch = D.watchlist || [];
   const byTicker = Object.fromEntries(watch.map((w) => [w.ticker, w]));
   const state = { tab: "macro", ticker: "PETR4", range: 252, riskRegion: "BR" };
@@ -114,6 +114,14 @@
     }
   }
 
+  function renderAlerts() {
+    const al = D.alerts || [];
+    const bar = $("#alertbar");
+    if (!al.length) { bar.innerHTML = ""; return; }
+    bar.innerHTML = `<span class="lab">ALERTS ${al.length}</span>` + al.map((a) => `<span class="a ${a.level}" title="Rule: ${esc(a.rule)}"><b>${esc(a.code)}</b> ${esc(a.text)}</span>`).join('<span class="sep">|</span>');
+    bar.onclick = () => go({ tab: "macro" });
+  }
+
   function renderFooter() {
     const st = D.status || {};
     const parts = [`<span><b>SOURCES</b> BCB SGS · Focus · FRED · Yahoo Finance · CVM</span>`];
@@ -139,6 +147,8 @@
     let h = "";
     const b = D.brief;
     if (b && b.brief) h += `<div class="teaser" id="teaser"><span class="k">AI BRIEF</span>${esc(b.brief.headline)} <span class="dim">· ${esc(b.date)} ▸ 5 BRIEF</span></div>`;
+    const al = D.alerts || [];
+    if (al.length) h += `<div class="sec-h">ALERTS <span class="dim">rule-based, no AI</span></div><ul class="issues alert-list">${al.map((a) => `<li class="${a.level}" title="Rule: ${esc(a.rule)}"><b>${esc(a.code)}</b> ${esc(a.text)}</li>`).join("")}</ul>`;
     h += '<div class="grid2"><div><div class="sec-h">BRAZIL <span class="dim">BCB SGS</span></div>' + macroTable(m.br) +
       '</div><div><div class="sec-h">UNITED STATES <span class="dim">FRED</span></div>' + macroTable(m.us) + "</div></div>";
     const f = m.focus || [];
@@ -321,6 +331,51 @@
     v.innerHTML = h;
   }
 
+  // ---------------------------------------------------------------- ASK
+  const LIVE = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+
+  function qaBlock(x) {
+    const cites = (x.series_used || []).map((c) => `<span title="${esc(c.source)}">${esc(c.label)}</span>`).join("");
+    const m = x.meta || {};
+    return `<div class="qa"><div class="q">${esc(x.question)}</div><div class="a">${esc(x.answer)}</div>` +
+      `<div class="cites">${x.cannot_answer ? '<b class="orange">NOT IN THE DATA</b> ' : ""}SERIES USED: ${cites || "—"}</div>` +
+      `<div class="cites">numbers checked: ${esc(x.number_check || "")} · ${esc(m.mode || "")} ${esc((m.recorded_at || "").slice(0, 10))}${x.as_of ? " · data as of " + esc(x.as_of) : ""}${x.stale_reason ? " · not refreshed on the last run" : ""}</div></div>`;
+  }
+
+  function viewAsk(v) {
+    const A = D.ask || {};
+    let h = "";
+    if (LIVE) {
+      h += `<form class="askform" id="askform"><input id="askq" maxlength="300" placeholder="Ask about today's data, e.g. did the real rate go up this month?"><button>ASK</button></form><div id="asklive"></div>`;
+    }
+    h += `<div class="sec-h">${LIVE ? "PRESET QUESTIONS" : "PRESET QUESTIONS · ANSWERED ON THE LAST SCHEDULED RUN"} <span class="dim">${esc(A.model || "")}</span></div>`;
+    h += (A.items || []).map(qaBlock).join("") || '<div class="dim">No answers yet. Run <code>python -m macro_terminal ask</code>.</div>';
+    h += `<div class="note">The model answers from a small JSON context built by the code (recent points of each series). It must cite the series it used (a closed list in the schema) and every number in its answer must exist in that context; otherwise it is asked once more, then the answer is dropped.${LIVE ? "" : " Live questions run on the author's machine: <code>python -m macro_terminal serve</code>."}</div>`;
+    v.innerHTML = h;
+    if (LIVE) {
+      $("#askform").onsubmit = async (e) => {
+        e.preventDefault();
+        const q = $("#askq").value.trim(); if (q.length < 3) return;
+        const out = $("#asklive"); out.innerHTML = '<div class="dim">asking...</div>';
+        try {
+          const r = await fetch("/api/ask", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question: q }) });
+          const x = await r.json();
+          out.innerHTML = x.error ? `<div class="down">${esc(x.error)}</div>` : qaBlock(x) + `<div class="note">${x.meta.api_calls} API call(s) · ~US$ ${Number(x.meta.cost_usd || 0).toFixed(5)}</div>`;
+        } catch (err) { out.innerHTML = '<div class="down">No local server. Start it with <code>python -m macro_terminal serve</code>.</div>'; }
+      };
+    }
+  }
+
+  // ---------------------------------------------------------------- NEWS
+  function viewNews(v) {
+    const eds = D.newsletters || [];
+    if (!eds.length) { v.innerHTML = '<div class="dim">No editions yet. Run <code>python -m macro_terminal newsletter</code>.</div>'; return; }
+    let h = `<div class="sec-h">EDITIONS <span class="dim">every Monday · AI brief + 3 charts + the week's numbers</span></div>`;
+    h += eds.map((x) => `<div class="ed"><span class="amber">${esc(x.week)}</span><span>${esc(x.headline)}</span><span><a href="${esc(x.html)}" target="_blank" rel="noopener">HTML</a> · <a href="${esc(x.md)}" target="_blank" rel="noopener">MD</a></span></div>`).join("");
+    h += `<iframe class="newsframe" src="${esc(eds[0].html)}" title="Latest edition"></iframe>`;
+    v.innerHTML = h;
+  }
+
   // ---------------------------------------------------------------- STATUS
   function viewStatus(v) {
     const st = D.status || {};
@@ -342,8 +397,8 @@
   }
 
   // ---------------------------------------------------------------- router
-  const VIEWS = { macro: viewMacro, gp: viewGP, fa: viewFA, risk: viewRisk, brief: viewBrief, status: viewStatus };
-  const TITLES = { macro: () => "MACRO MONITOR · BRAZIL / US", gp: () => `${state.ticker} · ${(byTicker[state.ticker] || {}).name || ""} · PRICE`, fa: () => `${state.ticker} · FUNDAMENTALS`, risk: () => "RISK · VOLATILITY, BETA, DRAWDOWN, SHARPE", brief: () => "AI BRIEF · MACRO AND MARKETS", status: () => "DATA STATUS · CHECKS AND CACHE" };
+  const VIEWS = { macro: viewMacro, gp: viewGP, fa: viewFA, risk: viewRisk, brief: viewBrief, ask: viewAsk, news: viewNews, status: viewStatus };
+  const TITLES = { macro: () => "MACRO MONITOR · BRAZIL / US", gp: () => `${state.ticker} · ${(byTicker[state.ticker] || {}).name || ""} · PRICE`, fa: () => `${state.ticker} · FUNDAMENTALS`, risk: () => "RISK · VOLATILITY, BETA, DRAWDOWN, SHARPE", brief: () => "AI BRIEF · MACRO AND MARKETS", ask: () => "ASK · QUESTIONS ON TODAY'S DATA", news: () => "WEEKLY NEWSLETTER · ARCHIVE", status: () => "DATA STATUS · CHECKS AND CACHE" };
 
   function render() {
     document.querySelectorAll("#tabs button").forEach((b) => b.classList.toggle("on", b.dataset.tab === state.tab));
@@ -368,7 +423,7 @@
     for (const w of words) {
       if (byTicker[w]) change.ticker = w;
       else if (TAB_ALIASES[w]) change.tab = TAB_ALIASES[w];
-      else if (/^[1-6]$/.test(w)) change.tab = TABS[+w - 1];
+      else if (/^[1-8]$/.test(w)) change.tab = TABS[+w - 1];
     }
     if (!Object.keys(change).length) { $("#cmd-input").value = ""; $("#cmd-input").placeholder = `Unknown: ${text}. Try PETR4 GP, VALE3 FA, RISK`; return; }
     go(change);
@@ -378,7 +433,7 @@
   document.querySelectorAll("#tabs button").forEach((b) => (b.onclick = () => go({ tab: b.dataset.tab })));
   document.addEventListener("keydown", (e) => {
     if (e.target.tagName === "INPUT") return;
-    if (/^[1-6]$/.test(e.key)) go({ tab: TABS[+e.key - 1] });
+    if (/^[1-8]$/.test(e.key)) go({ tab: TABS[+e.key - 1] });
     else if (e.key === "/" || (e.key.length === 1 && /[a-z]/i.test(e.key) && !e.ctrlKey && !e.metaKey)) { $("#cmd-input").focus(); }
     else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
       const i = watch.findIndex((w) => w.ticker === state.ticker);
@@ -389,6 +444,7 @@
   let rt; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(render, 150); });
 
   renderHeader();
+  renderAlerts();
   renderFooter();
   render();
 })();

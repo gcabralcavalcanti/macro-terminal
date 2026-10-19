@@ -15,7 +15,7 @@ from datetime import date
 import numpy as np
 import pandas as pd
 
-from . import cache, config
+from . import alerts, cache, config
 
 WINDOW = 252
 CHART_DAYS = 260
@@ -227,6 +227,8 @@ def payload(today: date | None = None, root=config.CACHE) -> dict:
         data.update(watchlist=[], charts={}, risk={}, as_of=None)
     data["fundamentals"] = fundamentals(cache.load("fundamentals", root))
     data["filings"] = filings(cache.load("filings", root))
+    data["alerts"] = alerts.evaluate(data, br, us, today)
+    data["alert_rules"] = alerts.RULES
     data["names"] = {t: v[2] for t, v in config.TICKERS.items()}
     data["no_fundamentals"] = sorted(config.NO_FUNDAMENTALS)
     return data

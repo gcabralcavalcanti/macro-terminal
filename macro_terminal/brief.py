@@ -24,11 +24,17 @@ SYSTEM = (
     "data_caveats: only items listed in data_quality (empty list if none)."
 )
 
-_NUM = re.compile(r"(?<![A-Za-z])[-+]?\d+(?:,\d{3})*(?:\.\d+)?")
+# 1,234.5 (thousands comma) | 5,22 (Portuguese decimal comma) | 13.75
+_NUM = re.compile(r"(?<![A-Za-z])[-+]?(?:\d+,\d{1,2}(?![\d,])|\d+(?:,\d{3})*(?:\.\d+)?)")
+_PT_DECIMAL = re.compile(r"^\d+,\d{1,2}$")
 
 
 def numbers_in(text: str) -> list[str]:
-    return [m.group().lstrip("+-").replace(",", "") for m in _NUM.finditer(text)]
+    out = []
+    for m in _NUM.finditer(text):
+        n = m.group().lstrip("+-")
+        out.append(n.replace(",", ".") if _PT_DECIMAL.match(n) else n.replace(",", ""))
+    return out
 
 
 def number_check(answer: dict, source: dict) -> list[str]:

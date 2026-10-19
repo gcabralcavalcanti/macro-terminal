@@ -88,3 +88,5 @@ MAX_TOKENS = 700
 TIMEOUT_S = 45.0
 SDK_RETRIES = 2      # network / 429 / 5xx, done by the SDK
 SCHEMA_RETRIES = 1   # one extra call if the answer fails our own checks
+ASK_MAX_CALLS = int(os.environ.get("MACRO_TERMINAL_ASK_MAX_CALLS", "12"))  # 6 preset questions x (1 + 1 retry)
+SERVE_MAX_CALLS = 20   # live questions per local server session
