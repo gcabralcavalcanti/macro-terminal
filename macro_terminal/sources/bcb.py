@@ -1,7 +1,5 @@
-"""Banco Central do Brasil: SGS time series and the Focus market survey (Olinda OData API).
+"""BCB SGS time series and the Focus survey (Olinda API)."""
 
-Adapted from the author's thesis collection code (BCB SGS / Focus downloads with retries).
-"""
 from __future__ import annotations
 
 import urllib.parse
@@ -20,19 +18,22 @@ def parse_sgs(payload: list[dict], key: str) -> pd.DataFrame:
     df = pd.DataFrame(payload)
     if df.empty:
         return pd.DataFrame(columns=["date", "series", "value"])
-    return pd.DataFrame({
-        "date": pd.to_datetime(df["data"], format="%d/%m/%Y", errors="coerce"),
-        "series": key,
-        "value": pd.to_numeric(df["valor"], errors="coerce"),
-    })
+    return pd.DataFrame(
+        {
+            "date": pd.to_datetime(df["data"], format="%d/%m/%Y", errors="coerce"),
+            "series": key,
+            "value": pd.to_numeric(df["valor"], errors="coerce"),
+        }
+    )
 
 
 def fetch_sgs(today: date) -> pd.DataFrame:
     parts = []
     for code, (key, *_rest) in config.SGS.items():
-        payload = net.get_json(SGS_URL.format(code=code),
-                               params={"formato": "json", "dataInicial": config.SGS_START,
-                                       "dataFinal": today.strftime("%d/%m/%Y")})
+        payload = net.get_json(
+            SGS_URL.format(code=code),
+            params={"formato": "json", "dataInicial": config.SGS_START, "dataFinal": today.strftime("%d/%m/%Y")},
+        )
         parts.append(parse_sgs(payload, key))
     return pd.concat(parts, ignore_index=True)
 
@@ -47,13 +48,15 @@ def parse_focus(payload: dict, indicator: str, key: str) -> pd.DataFrame:
     if "IndicadorDetalhe" in df:
         detail = df["IndicadorDetalhe"].astype(str)
         df = df[df["IndicadorDetalhe"].isna() | detail.str.contains("Fim", case=False) | (detail == "None")]
-    return pd.DataFrame({
-        "date": pd.to_datetime(df["Data"], errors="coerce"),
-        "series": key,
-        "ref_year": pd.to_numeric(df["DataReferencia"], errors="coerce").astype("Int64"),
-        "value": pd.to_numeric(df["Mediana"], errors="coerce"),
-        "respondents": pd.to_numeric(df.get("numeroRespondentes"), errors="coerce"),
-    })
+    return pd.DataFrame(
+        {
+            "date": pd.to_datetime(df["Data"], errors="coerce"),
+            "series": key,
+            "ref_year": pd.to_numeric(df["DataReferencia"], errors="coerce").astype("Int64"),
+            "value": pd.to_numeric(df["Mediana"], errors="coerce"),
+            "respondents": pd.to_numeric(df.get("numeroRespondentes"), errors="coerce"),
+        }
+    )
 
 
 def fetch_focus(today: date) -> pd.DataFrame:

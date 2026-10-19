@@ -1,8 +1,5 @@
-"""Local server for live questions: serves site/ and answers POST /api/ask with the Claude API.
+"""Local server (127.0.0.1) that serves site/ and answers POST /api/ask; the public page shows preset answers."""
 
-Runs only on 127.0.0.1 (the API key never leaves the machine). The public page on GitHub Pages has no server,
-so it shows the preset answers instead.
-"""
 from __future__ import annotations
 
 import json

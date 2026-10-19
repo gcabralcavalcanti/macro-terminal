@@ -1,10 +1,6 @@
-"""CVM open data (Brazilian SEC): quarterly fundamentals (ITR/DFP) and recent filings (IPE).
+"""CVM open data: quarterly income statements (ITR/DFP) and filings (IPE), read from the zips without extracting.
+Q4 is not filed as a quarter, so Q4 = annual (DFP) minus nine months year-to-date (ITR Q3). Values in BRL thousands."""
 
-Adapted from the author's thesis code that reads the CVM zips without extracting them.
-Files are latin-1, ';'-separated. Values are converted to BRL thousands.
-Quarter logic: ITR income statements carry both the isolated quarter and year-to-date figures;
-Q4 is not filed as a quarter, so Q4 = annual (DFP) - nine months year-to-date (ITR Q3).
-"""
 from __future__ import annotations
 
 import io
@@ -66,13 +62,15 @@ def quarterly(rows: pd.DataFrame, code_to_ticker: dict[int, str]) -> pd.DataFram
     annual = d[(d["KIND"] == "dfp") & (d["ini"].dt.month == 1) & (d["fim"].dt.month == 12)]
     q4 = annual.assign(year=annual["fim"].dt.year).merge(
         ytd9.assign(year=ytd9["fim"].dt.year)[["ticker", "metric", "year", "value"]],
-        on=["ticker", "metric", "year"], suffixes=("", "_9m"))
+        on=["ticker", "metric", "year"],
+        suffixes=("", "_9m"),
+    )
     q4 = q4.assign(value=q4["value"] - q4["value_9m"])[["ticker", "fim", "metric", "value"]]
 
     out = pd.concat([q, q4], ignore_index=True).rename(columns={"fim": "period_end"})
     out["period"] = out["period_end"].dt.year.astype(str) + "Q" + out["period_end"].dt.quarter.astype(str)
     out = out.drop_duplicates(["ticker", "period", "metric"], keep="first")
-    last = sorted(out["period"].unique())[-config.FUNDAMENTAL_QUARTERS:]
+    last = sorted(out["period"].unique())[-config.FUNDAMENTAL_QUARTERS :]
     out = out[out["period"].isin(last)]
     return out.sort_values(["ticker", "period", "metric"])[["ticker", "period", "period_end", "metric", "value"]]
 
@@ -86,7 +84,7 @@ def fetch_fundamentals(today: date) -> pd.DataFrame:
             try:
                 net.download(_zip_url(kind, y), path, max_age_days=config.FUNDAMENTALS_MAX_AGE_DAYS)
             except net.FetchError:
-                if y == today.year:      # the current year may not be published yet
+                if y == today.year:  # the current year may not be published yet
                     continue
                 raise
             parts.append(read_statement(path, kind, y, set(codes)))
@@ -97,14 +95,16 @@ def parse_filings(csv_bytes: bytes, code_to_ticker: dict[int, str]) -> pd.DataFr
     df = pd.read_csv(io.BytesIO(csv_bytes), sep=";", encoding="latin-1", dtype=str)
     df["code"] = pd.to_numeric(df["Codigo_CVM"], errors="coerce")
     df = df[df["code"].isin(code_to_ticker) & df["Categoria"].isin(CATEGORIES)]
-    out = pd.DataFrame({
-        "date": pd.to_datetime(df["Data_Entrega"], errors="coerce"),
-        "ticker": df["code"].map(code_to_ticker),
-        "category": df["Categoria"].map(lambda c: CATEGORIES[c][0]),
-        "category_en": df["Categoria"].map(lambda c: CATEGORIES[c][1]),
-        "subject": df["Assunto"].fillna(df["Tipo"]).fillna("").str.strip().str.slice(0, 140),
-        "link": df["Link_Download"].fillna(""),
-    })
+    out = pd.DataFrame(
+        {
+            "date": pd.to_datetime(df["Data_Entrega"], errors="coerce"),
+            "ticker": df["code"].map(code_to_ticker),
+            "category": df["Categoria"].map(lambda c: CATEGORIES[c][0]),
+            "category_en": df["Categoria"].map(lambda c: CATEGORIES[c][1]),
+            "subject": df["Assunto"].fillna(df["Tipo"]).fillna("").str.strip().str.slice(0, 140),
+            "link": df["Link_Download"].fillna(""),
+        }
+    )
     return out.sort_values("date", ascending=False).drop_duplicates(["ticker", "category", "subject", "date"])
 
 

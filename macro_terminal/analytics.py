@@ -1,12 +1,7 @@
-"""Numbers shown on the page, computed from the cache only (no network).
+"""Page numbers, computed from the cache. Risk uses 252 daily returns: vol = std x sqrt(252),
+beta = cov/var against the local index, Sharpe = (mean x 252 - risk-free) / vol,
+risk-free = average Selic target or fed funds over the window."""
 
-Risk metrics use the last 252 trading days of daily simple returns:
-- volatility: annualised standard deviation (x sqrt 252)
-- beta: cov(stock, benchmark) / var(benchmark); Ibovespa for Brazil, S&P 500 for the US
-- max drawdown: worst fall from a running peak of the close
-- Sharpe: (annualised mean return - risk-free) / volatility; risk-free = average Selic target (BR)
-  or effective fed funds (US) over the same window
-"""
 from __future__ import annotations
 
 import math
@@ -33,9 +28,16 @@ def _series_block(df: pd.DataFrame, key: str, label: str, unit: str, spark_n: in
     if s.empty:
         return None
     last, prev = s.iloc[-1], (s.iloc[-2] if len(s) > 1 else s.iloc[-1])
-    return {"key": key, "label": label, "unit": unit, "last": _r(last["value"]), "date": str(last["date"].date()),
-            "prev": _r(prev["value"]), "chg": _r(last["value"] - prev["value"]),
-            "spark": [_r(v) for v in s["value"].tail(spark_n)]}
+    return {
+        "key": key,
+        "label": label,
+        "unit": unit,
+        "last": _r(last["value"]),
+        "date": str(last["date"].date()),
+        "prev": _r(prev["value"]),
+        "chg": _r(last["value"] - prev["value"]),
+        "spark": [_r(v) for v in s["value"].tail(spark_n)],
+    }
 
 
 def _monthly(df: pd.DataFrame, key: str) -> pd.DataFrame:
@@ -57,9 +59,19 @@ def macro(br: pd.DataFrame | None, us: pd.DataFrame | None, focus: pd.DataFrame 
         sel = br[br["series"] == "selic_target"]["value"]
         ipca = br[br["series"] == "ipca_12m"]["value"]
         if len(sel) and len(ipca):
-            out["br"].append({"key": "real_rate", "label": "Real rate (Selic - IPCA 12m)", "unit": "pp",
-                              "last": _r(sel.iloc[-1] - ipca.iloc[-1]), "date": str(br["date"].max().date()),
-                              "prev": None, "chg": None, "spark": [], "source": "computed"})
+            out["br"].append(
+                {
+                    "key": "real_rate",
+                    "label": "Real rate (Selic - IPCA 12m)",
+                    "unit": "pp",
+                    "last": _r(sel.iloc[-1] - ipca.iloc[-1]),
+                    "date": str(br["date"].max().date()),
+                    "prev": None,
+                    "chg": None,
+                    "spark": [],
+                    "source": "computed",
+                }
+            )
     if us is not None and not us.empty:
         us = us.assign(date=pd.to_datetime(us["date"]))
         for sid, (key, label, unit, freq, _rng) in config.FRED.items():
@@ -68,7 +80,9 @@ def macro(br: pd.DataFrame | None, us: pd.DataFrame | None, focus: pd.DataFrame 
                 yoy = (cpi.pct_change(12) * 100).dropna().reset_index().assign(series="cpi_yoy")
                 b = _series_block(yoy, "cpi_yoy", "CPI y/y", "% 12m")
             else:
-                src = pd.concat([_monthly(us, key).iloc[:-1], us[us["series"] == key].tail(1)]) if freq == "daily" else us
+                src = (
+                    pd.concat([_monthly(us, key).iloc[:-1], us[us["series"] == key].tail(1)]) if freq == "daily" else us
+                )
                 b = _series_block(src, key, label, unit)
             if b:
                 b["source"] = f"FRED {sid}"
@@ -77,9 +91,19 @@ def macro(br: pd.DataFrame | None, us: pd.DataFrame | None, focus: pd.DataFrame 
         y10 = us[us["series"] == "ust_10y"].set_index("date")["value"]
         spread = (y10 - y2).dropna()
         if len(spread):
-            out["us"].append({"key": "curve_10y2y", "label": "Curve 10y - 2y", "unit": "pp",
-                              "last": _r(spread.iloc[-1]), "date": str(spread.index[-1].date()),
-                              "prev": None, "chg": None, "spark": [], "source": "computed"})
+            out["us"].append(
+                {
+                    "key": "curve_10y2y",
+                    "label": "Curve 10y - 2y",
+                    "unit": "pp",
+                    "last": _r(spread.iloc[-1]),
+                    "date": str(spread.index[-1].date()),
+                    "prev": None,
+                    "chg": None,
+                    "spark": [],
+                    "source": "computed",
+                }
+            )
     if focus is not None and not focus.empty:
         f = focus.assign(date=pd.to_datetime(focus["date"]))
         latest = f["date"].max()
@@ -92,11 +116,21 @@ def macro(br: pd.DataFrame | None, us: pd.DataFrame | None, focus: pd.DataFrame 
                     continue
                 v = cur["value"].iloc[0]
                 o = old["value"].iloc[0] if not old.empty else None
-                out["focus"].append({"key": key, "label": label, "unit": unit, "year": int(year),
-                                     "median": _r(v), "median_4w_ago": _r(o),
-                                     "chg_4w": _r(v - o) if o is not None else None,
-                                     "respondents": int(cur["respondents"].iloc[0]) if not pd.isna(cur["respondents"].iloc[0]) else None,
-                                     "date": str(latest.date())})
+                out["focus"].append(
+                    {
+                        "key": key,
+                        "label": label,
+                        "unit": unit,
+                        "year": int(year),
+                        "median": _r(v),
+                        "median_4w_ago": _r(o),
+                        "chg_4w": _r(v - o) if o is not None else None,
+                        "respondents": int(cur["respondents"].iloc[0])
+                        if not pd.isna(cur["respondents"].iloc[0])
+                        else None,
+                        "date": str(latest.date()),
+                    }
+                )
     return out
 
 
@@ -104,22 +138,38 @@ def macro(br: pd.DataFrame | None, us: pd.DataFrame | None, focus: pd.DataFrame 
 def watchlist(prices: pd.DataFrame) -> list[dict]:
     rows = []
     last_by_region: dict[str, pd.Timestamp] = {}
-    for t, (_sym, region, name, _code) in config.TICKERS.items():
+    for t, (_sym, region, _name, _code) in config.TICKERS.items():
         g = prices[prices["ticker"] == t]
         if not g.empty:
             last_by_region[region] = max(last_by_region.get(region, g["date"].max()), g["date"].max())
     for t, (_sym, region, name, _code) in config.TICKERS.items():
         g = prices[prices["ticker"] == t].sort_values("date")
         if g.empty:
-            rows.append({"ticker": t, "name": name, "region": region, "last": None, "chg_pct": None,
-                         "date": None, "stale": True})
+            rows.append(
+                {
+                    "ticker": t,
+                    "name": name,
+                    "region": region,
+                    "last": None,
+                    "chg_pct": None,
+                    "date": None,
+                    "stale": True,
+                }
+            )
             continue
         last, prev = g.iloc[-1], (g.iloc[-2] if len(g) > 1 else g.iloc[-1])
-        rows.append({"ticker": t, "name": name, "region": region, "last": _r(last["close"]),
-                     "chg": _r(last["close"] - prev["close"]),
-                     "chg_pct": _r((last["close"] / prev["close"] - 1) * 100),
-                     "date": str(last["date"].date()),
-                     "stale": bool(last["date"] < last_by_region[region] - pd.Timedelta(days=3))})
+        rows.append(
+            {
+                "ticker": t,
+                "name": name,
+                "region": region,
+                "last": _r(last["close"]),
+                "chg": _r(last["close"] - prev["close"]),
+                "chg_pct": _r((last["close"] / prev["close"] - 1) * 100),
+                "date": str(last["date"].date()),
+                "stale": bool(last["date"] < last_by_region[region] - pd.Timedelta(days=3)),
+            }
+        )
     return rows
 
 
@@ -132,14 +182,17 @@ def charts(prices: pd.DataFrame) -> dict:
         idx = tail["date"]
         hi52 = c.tail(WINDOW).max()
         lo52 = c.tail(WINDOW).min()
-        out[t] = {"dates": [str(d.date()) for d in idx],
-                  "close": [_r(v) for v in tail["close"]],
-                  "ma20": [_r(ma[20].get(d)) for d in idx],
-                  "ma50": [_r(ma[50].get(d)) for d in idx],
-                  "ma200": [_r(ma[200].get(d)) for d in idx],
-                  "volume": [int(v) if not pd.isna(v) else 0 for v in tail["volume"]],
-                  "hi52": _r(hi52), "lo52": _r(lo52),
-                  "avg_vol_20": int(g["volume"].tail(20).mean()) if g["volume"].notna().any() else 0}
+        out[t] = {
+            "dates": [str(d.date()) for d in idx],
+            "close": [_r(v) for v in tail["close"]],
+            "ma20": [_r(ma[20].get(d)) for d in idx],
+            "ma50": [_r(ma[50].get(d)) for d in idx],
+            "ma200": [_r(ma[200].get(d)) for d in idx],
+            "volume": [int(v) if not pd.isna(v) else 0 for v in tail["volume"]],
+            "hi52": _r(hi52),
+            "lo52": _r(lo52),
+            "avg_vol_20": int(g["volume"].tail(20).mean()) if g["volume"].notna().any() else 0,
+        }
     return out
 
 
@@ -176,14 +229,26 @@ def risk(prices: pd.DataFrame, br: pd.DataFrame | None, us: pd.DataFrame | None)
             mdd = (path / path.cummax() - 1).min()
             ann = r.mean() * 252
             sharpe = (ann - (rf or 0) / 100) / vol if vol else None
-            rows.append({"ticker": t, "vol": _r(vol * 100), "beta": _r(beta), "mdd": _r(mdd * 100),
-                         "sharpe": _r(sharpe), "ret_1y": _r((path.iloc[-1] / path.iloc[0] - 1) * 100),
-                         "obs": int(len(r))})
+            rows.append(
+                {
+                    "ticker": t,
+                    "vol": _r(vol * 100),
+                    "beta": _r(beta),
+                    "mdd": _r(mdd * 100),
+                    "sharpe": _r(sharpe),
+                    "ret_1y": _r((path.iloc[-1] / path.iloc[0] - 1) * 100),
+                    "obs": int(len(r)),
+                }
+            )
         corr = rets[cols].corr(min_periods=60)
-        out[region] = {"benchmark": bench, "rf": _r(rf), "rf_label": "avg Selic target" if region == "BR"
-                       else "avg effective fed funds", "window": f"{start.date()} to {rets.index.max().date()}",
-                       "rows": rows, "corr": {"tickers": cols,
-                                              "matrix": [[_r(corr.loc[a, b]) for b in cols] for a in cols]}}
+        out[region] = {
+            "benchmark": bench,
+            "rf": _r(rf),
+            "rf_label": "avg Selic target" if region == "BR" else "avg effective fed funds",
+            "window": f"{start.date()} to {rets.index.max().date()}",
+            "rows": rows,
+            "corr": {"tickers": cols, "matrix": [[_r(corr.loc[a, b]) for b in cols] for a in cols]},
+        }
     return out
 
 
@@ -195,10 +260,15 @@ def fundamentals(df: pd.DataFrame | None) -> dict:
     for t, g in df.groupby("ticker"):
         w = g.pivot_table(index="metric", columns="period", values="value")
         periods = sorted(w.columns)
-        rows = {m: [_r(w.loc[m, p] / 1000, 1) if m in w.index and not pd.isna(w.loc[m, p]) else None for p in periods]
-                for m in ("revenue", "gross_profit", "ebit", "net_income")}  # BRL thousands -> BRL millions
+        rows = {
+            m: [_r(w.loc[m, p] / 1000, 1) if m in w.index and not pd.isna(w.loc[m, p]) else None for p in periods]
+            for m in ("revenue", "gross_profit", "ebit", "net_income")
+        }  # BRL thousands -> BRL millions
         for name, num in (("gross_margin", "gross_profit"), ("ebit_margin", "ebit"), ("net_margin", "net_income")):
-            rows[name] = [_r(n / d * 100, 1) if n is not None and d else None for n, d in zip(rows[num], rows["revenue"])]
+            rows[name] = [
+                _r(n / d * 100, 1) if n is not None and d else None
+                for n, d in zip(rows[num], rows["revenue"], strict=True)
+            ]
         out[t] = {"periods": periods, "rows": rows, "unit": "BRL mn"}
     return out
 
@@ -207,8 +277,17 @@ def filings(df: pd.DataFrame | None) -> list[dict]:
     if df is None or df.empty:
         return []
     df = df.assign(date=pd.to_datetime(df["date"])).sort_values("date", ascending=False)
-    return [{"date": str(r.date.date()), "ticker": r.ticker, "category": r.category, "category_en": r.category_en,
-             "subject": str(r.subject) if not pd.isna(r.subject) else "", "link": r.link} for r in df.itertuples()]
+    return [
+        {
+            "date": str(r.date.date()),
+            "ticker": r.ticker,
+            "category": r.category,
+            "category_en": r.category_en,
+            "subject": str(r.subject) if not pd.isna(r.subject) else "",
+            "link": r.link,
+        }
+        for r in df.itertuples()
+    ]
 
 
 # ---------------------------------------------------------------- everything

@@ -55,7 +55,7 @@ jobs:
             data/cache
             data/brief.json
             data/ask.json
-            newsletter
+            reports/newsletter
             recordings
             .downloads
           key: terminal-${{ github.run_id }}

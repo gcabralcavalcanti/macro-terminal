@@ -1,16 +1,17 @@
-"""Universe, paths and limits. Everything that costs money is capped here."""
+"""Universe, paths and cost limits."""
+
 import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-CACHE = ROOT / "data" / "cache"        # last good copy of every dataset (versioned: the page works offline)
-DOWNLOADS = ROOT / ".downloads"        # big raw files (CVM zips); not versioned
-WEB = ROOT / "web"                     # page template (HTML/CSS/JS)
-SITE = ROOT / "site"                   # generated static site (what GitHub Pages serves)
+CACHE = ROOT / "data" / "cache"  # last good copy of every dataset (versioned: the page works offline)
+DOWNLOADS = ROOT / ".downloads"  # big raw files (CVM zips); not versioned
+WEB = ROOT / "web"  # page template (HTML/CSS/JS)
+SITE = ROOT / "site"  # generated static site (what GitHub Pages serves)
 SCHEMAS = ROOT / "schemas"
-RECORDINGS = ROOT / "recordings"       # recorded LLM answers: response cache + demo mode
-NEWSLETTER = ROOT / "newsletter"
-LOGS = ROOT / "logs"                   # one JSON line per LLM call (not versioned)
+RECORDINGS = ROOT / "recordings"  # recorded LLM answers: response cache + demo mode
+NEWSLETTER = ROOT / "reports" / "newsletter"
+LOGS = ROOT / "logs"  # one JSON line per LLM call (not versioned)
 
 USER_AGENT = "macro-terminal/1.0 (portfolio project; public data only)"
 HTTP_TIMEOUT_S = 60
@@ -75,7 +76,7 @@ NO_FUNDAMENTALS = {"ITUB4"}
 
 # ---------------------------------------------------------------- CVM (open data portal)
 CVM_BASE = "https://dados.cvm.gov.br/dados/CIA_ABERTA/DOC"
-FUNDAMENTALS_MAX_AGE_DAYS = 7   # the zips are large (~100 MB); refresh weekly, not daily
+FUNDAMENTALS_MAX_AGE_DAYS = 7  # the zips are large (~100 MB); refresh weekly, not daily
 FUNDAMENTAL_QUARTERS = 8
 FILINGS_KEEP = 40
 
@@ -86,7 +87,7 @@ PRICE_PER_MTOK = {"claude-haiku-5-5": (0.10, 0.50)}  # USD (input, output), Anth
 MAX_CALLS_PER_RUN = int(os.environ.get("MACRO_TERMINAL_MAX_CALLS", "2"))  # first try + one retry
 MAX_TOKENS = 700
 TIMEOUT_S = 45.0
-SDK_RETRIES = 2      # network / 429 / 5xx, done by the SDK
-SCHEMA_RETRIES = 1   # one extra call if the answer fails our own checks
-ASK_MAX_CALLS = int(os.environ.get("MACRO_TERMINAL_ASK_MAX_CALLS", "12"))  # 6 preset questions x (1 + 1 retry)
-SERVE_MAX_CALLS = 20   # live questions per local server session
+SDK_RETRIES = 2  # network / 429 / 5xx, done by the SDK
+SCHEMA_RETRIES = 1  # one extra call if the answer fails our own checks
+ASK_MAX_CALLS = int(os.environ.get("MACRO_TERMINAL_ASK_MAX_CALLS", "12"))  # preset questions x (1 + 1 retry)
+SERVE_MAX_CALLS = 20  # live questions per local server session

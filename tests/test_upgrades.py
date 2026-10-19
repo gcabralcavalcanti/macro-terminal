@@ -1,4 +1,5 @@
 """Alerts, ASK and the newsletter, with the synthetic cache and the fake API client (no network, no cost)."""
+
 import json
 
 import pandas as pd
@@ -14,19 +15,26 @@ from macro_terminal.newsletter import editions, line_svg, write_newsletter
 def test_policy_rate_change_and_drift(today):
     days = pd.bdate_range(end="2026-10-16", periods=40)
     selic = pd.DataFrame({"date": days, "series": "selic_target", "value": [14.0] * 20 + [13.75] * 20})
-    fed = pd.DataFrame({"date": days, "series": "fed_funds", "value": [3.63, 3.64] * 20})   # 1 bp drift only
+    fed = pd.DataFrame({"date": days, "series": "fed_funds", "value": [3.63, 3.64] * 20})  # 1 bp drift only
     out = alerts.policy_rates(selic, fed, today)
     assert len(out) == 1 and "cut 25 bp to 13.75%" in out[0]["text"]
 
 
 def test_inflation_band_and_moves():
-    macro = {"br": [{"key": "ipca_12m", "last": 4.58, "date": "2026-09-01"}],
-             "focus": [{"key": "focus_ipca", "year": 2026, "median": 5.22}, {"key": "focus_ipca", "year": 2027, "median": 4.32}]}
+    macro = {
+        "br": [{"key": "ipca_12m", "last": 4.58, "date": "2026-09-01"}],
+        "focus": [
+            {"key": "focus_ipca", "year": 2026, "median": 5.22},
+            {"key": "focus_ipca", "year": 2027, "median": 4.32},
+        ],
+    }
     out = alerts.inflation(macro)
     assert [a["code"] for a in out] == ["IPCA", "FOCUS"] and "2026" in out[1]["text"]
-    wl = [{"ticker": "USDBRL", "region": "FX", "chg_pct": -2.1, "date": "d"},
-          {"ticker": "PETR4", "region": "BR", "chg_pct": -2.8, "date": "d"},
-          {"ticker": "NVDA", "region": "US", "chg_pct": 6.0, "date": "d"}]
+    wl = [
+        {"ticker": "USDBRL", "region": "FX", "chg_pct": -2.1, "date": "d"},
+        {"ticker": "PETR4", "region": "BR", "chg_pct": -2.8, "date": "d"},
+        {"ticker": "NVDA", "region": "US", "chg_pct": 6.0, "date": "d"},
+    ]
     assert [a["text"].split()[0] for a in alerts.market_moves(wl)] == ["USDBRL", "NVDA"]
 
 
@@ -41,7 +49,7 @@ def test_context_and_closed_list_of_series(cache_dir, today):
     ctx = build_context(data, cache_dir)
     assert {"selic_target", "real_rate", "curve_10y2y", "px_IBOV", "risk_BR"} <= set(ctx["series"])
     weekly = ctx["series"]["selic_target"]["history"]
-    assert all(d <= "2026-10-19" for d, _ in weekly)          # real dates, never an end-of-week label in the future
+    assert all(d <= "2026-10-19" for d, _ in weekly)  # real dates, never an end-of-week label in the future
     api, strict = schemas(ctx)
     assert api["properties"]["series_used"]["items"]["enum"] == sorted(ctx["series"])
 
@@ -71,8 +79,12 @@ def test_ask_needs_citations(cache_dir, today, tmp_path, fake_client):
 
 def test_presets_keep_previous_answer_when_api_fails(cache_dir, today, tmp_path, fake_client):
     out = tmp_path / "ask.json"
-    prev = {"items": [{"question": q, "answer": "old", "series_used": [], "cannot_answer": False}
-                      for q in __import__("macro_terminal.ask", fromlist=["PRESETS"]).PRESETS]}
+    prev = {
+        "items": [
+            {"question": q, "answer": "old", "series_used": [], "cannot_answer": False}
+            for q in __import__("macro_terminal.ask", fromlist=["PRESETS"]).PRESETS
+        ]
+    }
     out.write_text(json.dumps(prev), encoding="utf-8")
     res = run_presets("demo", today, out, recordings=tmp_path / "rec", cache_root=cache_dir)
     assert all(i["answer"] == "old" and i["stale_reason"] for i in res["items"])
@@ -90,8 +102,11 @@ def test_line_svg():
 
 
 def test_newsletter_md_html_and_archive(cache_dir, today, tmp_path):
-    brief = {"date": "2026-10-19", "brief": {"headline": "Quiet week", "points": ["a", "b", "c"], "risks": ["r"],
-                                             "data_caveats": []}, "meta": {"model": "m"}}
+    brief = {
+        "date": "2026-10-19",
+        "brief": {"headline": "Quiet week", "points": ["a", "b", "c"], "risks": ["r"], "data_caveats": []},
+        "meta": {"model": "m"},
+    }
     bp = tmp_path / "brief.json"
     bp.write_text(json.dumps(brief), encoding="utf-8")
     news = tmp_path / "news"

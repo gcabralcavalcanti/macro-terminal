@@ -1,13 +1,10 @@
-"""Static site generation: web/ template + data.js -> site/.
+"""web/ template + data.js -> site/. Data is embedded as a script (not fetched) so the page opens from disk."""
 
-The data goes into data.js as `window.TERMINAL = {...}` (not a fetch of data.json), so the page also
-opens straight from disk (file://) with no server. GitHub Pages serves the same folder.
-"""
 from __future__ import annotations
 
 import json
 import shutil
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 from . import analytics, config
@@ -20,15 +17,21 @@ def load_brief(path: Path = BRIEF_FILE) -> dict | None:
     return json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
 
 
-def build(out: Path = config.SITE, today: date | None = None, cache_root: Path = config.CACHE,
-          brief_path: Path = BRIEF_FILE, ask_path: Path = ASK_FILE, news_dir: Path = config.NEWSLETTER) -> Path:
+def build(
+    out: Path = config.SITE,
+    today: date | None = None,
+    cache_root: Path = config.CACHE,
+    brief_path: Path = BRIEF_FILE,
+    ask_path: Path = ASK_FILE,
+    news_dir: Path = config.NEWSLETTER,
+) -> Path:
     from .newsletter import editions
 
     data = analytics.payload(today, cache_root)
     data["brief"] = load_brief(brief_path)
     data["ask"] = load_brief(ask_path)
     data["newsletters"] = editions(news_dir)
-    data["generated_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    data["generated_at"] = datetime.now(UTC).isoformat(timespec="seconds")
     data = analytics.json_safe(data)
     out.mkdir(parents=True, exist_ok=True)
     for f in config.WEB.iterdir():

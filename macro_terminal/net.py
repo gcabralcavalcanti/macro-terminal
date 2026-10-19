@@ -1,4 +1,5 @@
-"""HTTP with timeout and retries. The only place that touches the network (besides yfinance)."""
+"""HTTP GET with timeout and retries."""
+
 from __future__ import annotations
 
 import time
@@ -13,13 +14,13 @@ class FetchError(RuntimeError):
     pass
 
 
-def get(url: str, *, params: dict | None = None, timeout: float = config.HTTP_TIMEOUT_S,
-        tries: int = config.HTTP_TRIES) -> requests.Response:
+def get(
+    url: str, *, params: dict | None = None, timeout: float = config.HTTP_TIMEOUT_S, tries: int = config.HTTP_TRIES
+) -> requests.Response:
     last = None
     for attempt in range(tries):
         try:
-            r = requests.get(url, params=params, timeout=timeout,
-                             headers={"User-Agent": config.USER_AGENT})
+            r = requests.get(url, params=params, timeout=timeout, headers={"User-Agent": config.USER_AGENT})
             if r.status_code == 404:
                 raise FetchError(f"404 not found: {url}")
             r.raise_for_status()

@@ -1,5 +1,5 @@
-"""Daily prices and volume from Yahoo Finance (yfinance). Unofficial source: may fail or throttle,
-so each ticker that does not come back is filled from the last cache and listed as stale."""
+"""Daily prices from Yahoo Finance (unofficial). Tickers missing from a download keep their cached history."""
+
 from __future__ import annotations
 
 import pandas as pd
@@ -24,8 +24,15 @@ def fetch() -> pd.DataFrame:
     import yfinance as yf  # imported here so tests and the page build never need it
 
     symbols = {v[0]: k for k, v in config.TICKERS.items()}
-    raw = yf.download(list(symbols), period=config.PRICE_PERIOD, interval="1d", auto_adjust=True,
-                      progress=False, threads=True, group_by="column")
+    raw = yf.download(
+        list(symbols),
+        period=config.PRICE_PERIOD,
+        interval="1d",
+        auto_adjust=True,
+        progress=False,
+        threads=True,
+        group_by="column",
+    )
     return tidy(raw, symbols)
 
 

@@ -1,9 +1,5 @@
-"""Automatic data checks: missing values, dates and units.
+"""Checks on every download. "error" rejects it (the cache is kept); "warn" keeps it and shows on the STATUS tab."""
 
-Every check returns issues as {"level": "error" | "warn", "msg": ...}.
-- error: the new download is rejected and the last good cache is kept (the page marks it STALE).
-- warn: the data is used, and the warning is shown on the STATUS tab.
-"""
 from __future__ import annotations
 
 from datetime import date
@@ -13,7 +9,7 @@ import pandas as pd
 # how old the last observation may be before it is flagged (days)
 MAX_AGE = {"daily": 10, "weekly": 21, "monthly": 100, "quarterly": 200}
 MAX_MISSING_SHARE = 0.20
-MAX_DAILY_MOVE = 0.40   # |return| above 40% in one day is flagged (split, bad tick, wrong unit)
+MAX_DAILY_MOVE = 0.40  # |return| above 40% in one day is flagged (split, bad tick, wrong unit)
 
 
 def _issue(level: str, msg: str) -> dict:
@@ -70,12 +66,16 @@ def check_series(df: pd.DataFrame, spec: dict, today: date, name: str):
         v = s["value"].dropna()
         out = v[(v < lo) | (v > hi)]
         if not out.empty:
-            issues.append(_issue("error", f"{label}: {len(out)} values outside the plausible range "
-                                          f"[{lo}, {hi}] {unit} (unit change?), e.g. {out.iloc[-1]}"))
+            issues.append(
+                _issue(
+                    "error",
+                    f"{label}: {len(out)} values outside the plausible range "
+                    f"[{lo}, {hi}] {unit} (unit change?), e.g. {out.iloc[-1]}",
+                )
+            )
         age = (pd.Timestamp(today) - s["date"].max()).days
         if age > MAX_AGE[freq]:
-            issues.append(_issue("warn", f"{label}: last observation is {age} days old "
-                                         f"({s['date'].max().date()})"))
+            issues.append(_issue("warn", f"{label}: last observation is {age} days old ({s['date'].max().date()})"))
     df = df.dropna(subset=["value"]).sort_values(["series", "date"]).reset_index(drop=True)
     return df, issues
 
@@ -104,8 +104,12 @@ def check_prices(df: pd.DataFrame, expected: list[str], today: date, name: str =
         r = g["close"].pct_change().abs()
         jumps = g.loc[r > MAX_DAILY_MOVE, "date"]
         if not jumps.empty:
-            issues.append(_issue("warn", f"{t}: daily move above {MAX_DAILY_MOVE:.0%} on "
-                                         f"{jumps.iloc[-1].date()} (split or bad tick?)"))
+            issues.append(
+                _issue(
+                    "warn",
+                    f"{t}: daily move above {MAX_DAILY_MOVE:.0%} on {jumps.iloc[-1].date()} (split or bad tick?)",
+                )
+            )
         age = (pd.Timestamp(today) - g["date"].max()).days
         if age > MAX_AGE["daily"]:
             issues.append(_issue("warn", f"{t}: last price is {age} days old"))
@@ -124,8 +128,13 @@ def check_fundamentals(df: pd.DataFrame, name: str = "fundamentals"):
     # revenue sits between BRL 100 million and BRL 1 trillion; anything else means a scale error.
     off = rev[(rev["value"] < 1e5) | (rev["value"] > 1e9)]
     if not off.empty:
-        issues.append(_issue("error", f"{name}: revenue outside BRL 100 mn - 1 tn per quarter for "
-                                      f"{sorted(off['ticker'].unique())} (scale error?)"))
+        issues.append(
+            _issue(
+                "error",
+                f"{name}: revenue outside BRL 100 mn - 1 tn per quarter for "
+                f"{sorted(off['ticker'].unique())} (scale error?)",
+            )
+        )
     counts = df[df["metric"] == "revenue"].groupby("ticker").size()
     short = counts[counts < 4]
     for t, n in short.items():

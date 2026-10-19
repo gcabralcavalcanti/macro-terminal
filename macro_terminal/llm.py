@@ -1,21 +1,14 @@
-"""Thin, defensive wrapper around the Claude API.
+"""Claude API wrapper: JSON schema output validated locally, recorded answers (cache and demo mode),
+call cap, timeout, one retry on failed checks, one JSON log line per call. The key is never printed."""
 
-- JSON answers constrained by a JSON Schema (structured outputs) and validated again locally,
-  including constraints the API does not enforce (item counts, string lengths).
-- Every accepted answer is recorded under recordings/. The same request is never paid twice,
-  and without an API key the recordings replay (demo mode).
-- Call cap per run, timeout, SDK retries (network/429/5xx), one retry when our own checks fail,
-  one JSON log line per call with tokens and cost.
-- The key comes from ANTHROPIC_API_KEY (environment or .env). It is never printed or logged.
-"""
 from __future__ import annotations
 
 import hashlib
 import json
 import os
-from datetime import datetime, timezone
+from collections.abc import Callable
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Callable
 
 import jsonschema
 
@@ -42,6 +35,7 @@ def load_key(root: Path = config.ROOT) -> str | None:
     if os.name == "nt":  # variable set in Windows after this terminal was opened
         try:
             import winreg
+
             with winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment") as k:
                 return winreg.QueryValueEx(k, "ANTHROPIC_API_KEY")[0] or None
         except OSError:
@@ -56,8 +50,14 @@ def request_key(request: dict) -> str:
 class LLM:
     """mode: 'auto' (live if a key exists, else demo), 'live' or 'demo'."""
 
-    def __init__(self, mode: str = "auto", client=None, recordings: Path = config.RECORDINGS,
-                 log_dir: Path = config.LOGS, max_calls: int = config.MAX_CALLS_PER_RUN):
+    def __init__(
+        self,
+        mode: str = "auto",
+        client=None,
+        recordings: Path = config.RECORDINGS,
+        log_dir: Path = config.LOGS,
+        max_calls: int = config.MAX_CALLS_PER_RUN,
+    ):
         key = None if mode == "demo" else load_key()
         if mode == "live" and not key and client is None:
             raise RuntimeError("Live mode needs ANTHROPIC_API_KEY (environment or .env).")
@@ -71,21 +71,39 @@ class LLM:
         self._client = client
         if self._client is None and self.mode == "live":
             import anthropic
+
             self._client = anthropic.Anthropic(api_key=key, timeout=config.TIMEOUT_S, max_retries=config.SDK_RETRIES)
 
     # ------------------------------------------------------------------ public
-    def ask(self, task: str, system: str, prompt: str, api_schema: dict, strict_schema: dict,
-            check: Callable[[dict], list[str]] | None = None) -> tuple[dict, dict]:
+    def ask(
+        self,
+        task: str,
+        system: str,
+        prompt: str,
+        api_schema: dict,
+        strict_schema: dict,
+        check: Callable[[dict], list[str]] | None = None,
+    ) -> tuple[dict, dict]:
         """Return (answer, meta). The answer matches strict_schema and passes check."""
-        request = {"model": config.MODEL, "system": system, "prompt": prompt, "schema": api_schema,
-                   "max_tokens": config.MAX_TOKENS}
+        request = {
+            "model": config.MODEL,
+            "system": system,
+            "prompt": prompt,
+            "schema": api_schema,
+            "max_tokens": config.MAX_TOKENS,
+        }
         key = request_key(request)
         path = self.recordings / f"{task}-{key}.json"
         if path.exists():
             rec = json.loads(path.read_text(encoding="utf-8"))
             self._log(task, key, "recording", 0, 0, [])
-            return rec["answer"], {"mode": "recorded", "request": key, "recorded_at": rec["recorded_at"],
-                                   "input_tokens": rec.get("input_tokens"), "output_tokens": rec.get("output_tokens")}
+            return rec["answer"], {
+                "mode": "recorded",
+                "request": key,
+                "recorded_at": rec["recorded_at"],
+                "input_tokens": rec.get("input_tokens"),
+                "output_tokens": rec.get("output_tokens"),
+            }
         if self.mode == "demo":
             raise NoRecording(f"No recorded answer for {task} ({key}).")
 
@@ -97,14 +115,30 @@ class LLM:
             self._log(task, key, "api", usage[0], usage[1], problems, attempt)
             if not problems:
                 self.recordings.mkdir(parents=True, exist_ok=True)
-                rec = {"task": task, "model": config.MODEL, "recorded_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-                       "input_tokens": self.tokens_in, "output_tokens": self.tokens_out,
-                       "request": {"system": system, "prompt": prompt}, "answer": answer}
+                rec = {
+                    "task": task,
+                    "model": config.MODEL,
+                    "recorded_at": datetime.now(UTC).isoformat(timespec="seconds"),
+                    "input_tokens": self.tokens_in,
+                    "output_tokens": self.tokens_out,
+                    "request": {"system": system, "prompt": prompt},
+                    "answer": answer,
+                }
                 path.write_text(json.dumps(rec, ensure_ascii=False, indent=1), encoding="utf-8")
-                return answer, {"mode": "live", "request": key, "recorded_at": rec["recorded_at"],
-                                "input_tokens": self.tokens_in, "output_tokens": self.tokens_out, "attempts": attempt + 1}
-            user = (prompt + "\n\nYour previous answer was rejected by the checker:\n- " + "\n- ".join(problems)
-                    + "\nAnswer again, fixing these points.")
+                return answer, {
+                    "mode": "live",
+                    "request": key,
+                    "recorded_at": rec["recorded_at"],
+                    "input_tokens": self.tokens_in,
+                    "output_tokens": self.tokens_out,
+                    "attempts": attempt + 1,
+                }
+            user = (
+                prompt
+                + "\n\nYour previous answer was rejected by the checker:\n- "
+                + "\n- ".join(problems)
+                + "\nAnswer again, fixing these points."
+            )
         raise ValueError(f"{task}: answer failed checks after retries: {problems}")
 
     def cost_usd(self, tin: int | None = None, tout: int | None = None) -> float:
@@ -151,8 +185,17 @@ class LLM:
 
     def _log(self, task, key, source, tin, tout, problems, attempt=0):
         self.log_path.parent.mkdir(parents=True, exist_ok=True)
-        line = {"ts": datetime.now(timezone.utc).isoformat(timespec="seconds"), "task": task, "request": key,
-                "source": source, "attempt": attempt, "model": config.MODEL, "input_tokens": tin,
-                "output_tokens": tout, "cost_usd": round(self.cost_usd(tin, tout), 6), "problems": problems}
+        line = {
+            "ts": datetime.now(UTC).isoformat(timespec="seconds"),
+            "task": task,
+            "request": key,
+            "source": source,
+            "attempt": attempt,
+            "model": config.MODEL,
+            "input_tokens": tin,
+            "output_tokens": tout,
+            "cost_usd": round(self.cost_usd(tin, tout), 6),
+            "problems": problems,
+        }
         with self.log_path.open("a", encoding="utf-8") as f:
             f.write(json.dumps(line, ensure_ascii=False) + "\n")

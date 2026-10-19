@@ -1,13 +1,10 @@
-"""Collection step: download -> automatic checks -> cache.
+"""Download -> checks -> cache. A failing source keeps its last good copy and is marked stale."""
 
-A source that fails (network error, layout change, failed check) never breaks the run:
-the last good cache stays in place and the dataset is marked STALE on the page.
-"""
 from __future__ import annotations
 
 import traceback
+from collections.abc import Callable
 from datetime import date
-from typing import Callable
 
 import pandas as pd
 
@@ -24,9 +21,13 @@ SOURCES = {
 }
 
 
-def run_one(name: str, fetch: Callable[[], pd.DataFrame],
-            check: Callable[[pd.DataFrame], tuple[pd.DataFrame, list[dict]]],
-            date_col: str | None = "date", root=config.CACHE) -> str:
+def run_one(
+    name: str,
+    fetch: Callable[[], pd.DataFrame],
+    check: Callable[[pd.DataFrame], tuple[pd.DataFrame, list[dict]]],
+    date_col: str | None = "date",
+    root=config.CACHE,
+) -> str:
     source = SOURCES[name]
     try:
         df = fetch()
@@ -57,8 +58,16 @@ def collect(today: date | None = None, only: list[str] | None = None, root=confi
         return filled
 
     jobs = {
-        "macro_br": (lambda: bcb.fetch_sgs(today), lambda d: checks.check_series(d, bcb.sgs_spec(), today, "BCB SGS"), "date"),
-        "focus": (lambda: bcb.fetch_focus(today), lambda d: checks.check_series(d, bcb.focus_spec(), today, "Focus"), "date"),
+        "macro_br": (
+            lambda: bcb.fetch_sgs(today),
+            lambda d: checks.check_series(d, bcb.sgs_spec(), today, "BCB SGS"),
+            "date",
+        ),
+        "focus": (
+            lambda: bcb.fetch_focus(today),
+            lambda d: checks.check_series(d, bcb.focus_spec(), today, "Focus"),
+            "date",
+        ),
         "macro_us": (lambda: fred.fetch(today), lambda d: checks.check_series(d, fred.spec(), today, "FRED"), "date"),
         "prices": (prices_fetch, lambda d: checks.check_prices(d, expected, today), "date"),
         "fundamentals": (lambda: cvm.fetch_fundamentals(today), checks.check_fundamentals, "period_end"),

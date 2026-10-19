@@ -1,4 +1,5 @@
 """FRED (Federal Reserve Bank of St. Louis) via the public CSV endpoint: no API key needed."""
+
 from __future__ import annotations
 
 import io
@@ -17,8 +18,13 @@ def parse_csv(text: str, key: str) -> pd.DataFrame:
     if raw.shape[1] != 2:
         raise ValueError(f"{key}: unexpected FRED layout {list(raw.columns)}")
     raw.columns = ["date", "value"]
-    return pd.DataFrame({"date": pd.to_datetime(raw["date"], errors="coerce"), "series": key,
-                         "value": pd.to_numeric(raw["value"], errors="coerce")})
+    return pd.DataFrame(
+        {
+            "date": pd.to_datetime(raw["date"], errors="coerce"),
+            "series": key,
+            "value": pd.to_numeric(raw["value"], errors="coerce"),
+        }
+    )
 
 
 def fetch(today: date) -> pd.DataFrame:
