@@ -4,7 +4,7 @@ python -m macro_terminal collect [--only prices,filings]   download, check, cach
 python -m macro_terminal brief [--demo]                    AI daily brief (Claude API; recorded answer without a key)
 python -m macro_terminal ask ["question"] [--demo]          preset questions (or one live question)
 python -m macro_terminal newsletter                        weekly edition in Markdown and HTML
-python -m macro_terminal build                             write the static site to site/
+python -m macro_terminal build                             write the static page to output/site/
 python -m macro_terminal serve                             local server with live questions (127.0.0.1)
 python -m macro_terminal all [--demo]                      collect + brief + ask + newsletter + build
 """

@@ -1,4 +1,4 @@
-"""web/ template + data.js -> site/. Data is embedded as a script (not fetched) so the page opens from disk."""
+"""Page template + data.js -> output/site/. Data is embedded as a script (not fetched) so the page opens from disk."""
 
 from __future__ import annotations
 

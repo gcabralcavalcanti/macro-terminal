@@ -55,8 +55,8 @@ jobs:
             data/cache
             data/brief.json
             data/ask.json
-            reports/newsletter
-            recordings
+            output/newsletter
+            data/recorded
             .downloads
           key: terminal-${{ github.run_id }}
           restore-keys: terminal-
@@ -85,9 +85,12 @@ jobs:
       - run: python -m macro_terminal newsletter
       - run: python -m macro_terminal build
 
+      # fails with a clear message if Pages is not enabled (Settings > Pages > Source: GitHub Actions)
+      - uses: actions/configure-pages@v5
+
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: site
+          path: output/site
 
   deploy:
     needs: build

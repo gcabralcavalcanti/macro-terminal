@@ -1,4 +1,4 @@
-"""Local server (127.0.0.1) that serves site/ and answers POST /api/ask; the public page shows preset answers."""
+"""Local server (127.0.0.1) that serves output/site/ and answers POST /api/ask; the public page shows preset answers."""
 
 from __future__ import annotations
 

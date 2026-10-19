@@ -1,8 +1,9 @@
 .env
 .downloads/
-logs/
 __pycache__/
 .pytest_cache/
+.ruff_cache/
 *.pyc
-.live-answers/
-site/
+# generated: only the sample newsletter edition is versioned
+output/*
+!output/newsletter/

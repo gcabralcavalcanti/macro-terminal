@@ -4,14 +4,16 @@ import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+PKG = ROOT / "macro_terminal"
 CACHE = ROOT / "data" / "cache"  # last good copy of every dataset (versioned: the page works offline)
-DOWNLOADS = ROOT / ".downloads"  # big raw files (CVM zips); not versioned
-WEB = ROOT / "web"  # page template (HTML/CSS/JS)
-SITE = ROOT / "site"  # generated static site (what GitHub Pages serves)
-SCHEMAS = ROOT / "schemas"
-RECORDINGS = ROOT / "recordings"  # recorded LLM answers: response cache + demo mode
-NEWSLETTER = ROOT / "reports" / "newsletter"
-LOGS = ROOT / "logs"  # one JSON line per LLM call (not versioned)
+RECORDINGS = ROOT / "data" / "recorded"  # recorded LLM answers: response cache + demo mode
+DOWNLOADS = ROOT / ".downloads"  # CVM zips, ~100 MB; not versioned
+WEB = PKG / "web"  # page template (HTML/CSS/JS)
+SCHEMAS = PKG / "schemas"
+OUTPUT = ROOT / "output"
+SITE = OUTPUT / "site"  # generated page (what GitHub Pages serves); not versioned
+NEWSLETTER = OUTPUT / "newsletter"
+LOGS = OUTPUT / "logs"  # one JSON line per LLM call; not versioned
 
 USER_AGENT = "macro-terminal/1.0 (portfolio project; public data only)"
 HTTP_TIMEOUT_S = 60

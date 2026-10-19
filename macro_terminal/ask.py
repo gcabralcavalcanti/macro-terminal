@@ -230,7 +230,7 @@ def run_presets(
 def ask_live(question: str, cache_root: Path = config.CACHE, client=None, mode: str = "auto") -> dict:
     data = analytics.json_safe(analytics.payload(None, cache_root))
     # live questions are cached outside the repository (they are whatever someone typed)
-    llm = LLM(mode=mode, client=client, max_calls=config.MAX_CALLS_PER_RUN, recordings=config.ROOT / ".live-answers")
+    llm = LLM(mode=mode, client=client, max_calls=config.MAX_CALLS_PER_RUN, recordings=config.OUTPUT / "live-answers")
     res = ask_one(question, build_context(data, cache_root), llm)
     res["meta"].update(api_calls=llm.calls, cost_usd=round(llm.cost_usd(), 6))
     return res

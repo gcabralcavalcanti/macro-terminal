@@ -1,6 +1,6 @@
 """Build the terminal and open it. Works offline and without an API key (committed data, recorded AI answers).
 
-python demo.py              # build from data/cache and open site/index.html
+python demo.py              # build from data/cache and open output/site/index.html
 python demo.py --refresh    # download fresh public data first; AI answers still replayed
 python demo.py --refresh --live   # also call the Claude API (needs ANTHROPIC_API_KEY)
 """
