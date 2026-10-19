@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Macro Terminal</title>
+<meta name="description" content="Terminal-style dashboard of Brazilian and US macro and market data, built from public sources, with an AI daily brief.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23000'/%3E%3Cpath d='M2 12 6 7l3 3 5-6' stroke='%23fb8b1e' stroke-width='2' fill='none'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="terminal.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="logo">MTRM</span><span class="brand-name">MACRO TERMINAL</span></div>
+  <form class="cmd" id="cmd" autocomplete="off">
+    <span class="cmd-sec" id="cmd-sec">PETR4</span>
+    <input id="cmd-input" type="text" spellcheck="false" placeholder="TICKER [FUNCTION] &lt;GO&gt;  e.g. VALE3 FA" aria-label="Command">
+    <button type="submit" class="go">GO</button>
+  </form>
+  <div class="top-right">
+    <span id="asof" class="dim"></span>
+    <span id="health" class="pill"></span>
+    <span id="clock" class="clock"></span>
+  </div>
+</header>
+
+<nav class="tabs" id="tabs" role="tablist">
+  <button data-tab="macro" role="tab"><b>1</b> MACRO</button>
+  <button data-tab="gp" role="tab"><b>2</b> GP <span class="dim">PRICE</span></button>
+  <button data-tab="fa" role="tab"><b>3</b> FA <span class="dim">FUNDAMENTALS</span></button>
+  <button data-tab="risk" role="tab"><b>4</b> RISK</button>
+  <button data-tab="brief" role="tab"><b>5</b> BRIEF <span class="dim">AI</span></button>
+  <button data-tab="status" role="tab"><b>6</b> STATUS <span class="dim">DATA</span></button>
+</nav>
+
+<div class="layout">
+  <aside class="panel watch">
+    <div class="panel-h">SECURITIES <span class="dim">1D CHG</span></div>
+    <div id="watchlist" class="watch-list"></div>
+    <div class="watch-note dim" id="watch-note"></div>
+  </aside>
+
+  <main class="panel main">
+    <div class="panel-h" id="main-title"></div>
+    <section id="view" class="view"></section>
+  </main>
+
+  <aside class="panel filings">
+    <div class="panel-h">RECENT FILINGS <span class="dim">CVM</span></div>
+    <div id="filings" class="filing-list"></div>
+  </aside>
+</div>
+
+<footer class="status-line" id="status-line"></footer>
+
+<script src="data.js"></script>
+<script src="terminal.js"></script>
+</body>
+</html>

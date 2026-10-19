@@ -1,0 +1,231 @@
+{
+ "date": "2026-10-19",
+ "brief": {
+  "headline": "Brazil Selic held at 13.75% while IPCA 12m rose to 4.58%; BRL firmed to 5.06 per USD and Focus 2026 IPCA expectations moved up to 5.22.",
+  "points": [
+   "The Selic target was unchanged at 13.75% p.a. on 2026-10-19, and the real rate (Selic minus IPCA 12m) stands at 9.17 pp.",
+   "IPCA 12m rose by 0.36 to 4.58% and IPCA m/m rose by 1.14 to 0.82% as of 2026-09-01, a sign of firmer inflation momentum.",
+   "Focus IPCA for 2026 rose by 0.3 over four weeks to a median of 5.22, while the 2027 median moved only 0.02 to 4.32.",
+   "Focus Selic end-2026 expectations fell 0.25 to 13.25, and USD/BRL PTAX closed at 5.06 after a change of -0.12.",
+   "In the US, the Fed funds rate was unchanged at 3.88% p.a., UST 2y fell 0.14 to 4.74% and UST 10y fell 0.2 to 5.09%, with the 10y-2y curve at 0.35 pp."
+  ],
+  "risks": [
+   "Rising Focus IPCA 2026 expectations could keep pressure on the Selic path if inflation surprises persist.",
+   "A further move in USD/BRL, which fell 1.24% in the day to 5.03, could shift imported inflation expectations.",
+   "US CPI y/y rose by 0.31 to 4.02% while the Fed funds rate was held at 3.88%, leaving room for rate expectations to shift."
+  ],
+  "data_caveats": []
+ },
+ "meta": {
+  "model": "claude-haiku-5-5",
+  "mode": "live",
+  "recorded_at": "2026-10-19T20:35:01+00:00",
+  "input_tokens": 2431,
+  "output_tokens": 556,
+  "attempts": 1,
+  "number_check": "passed",
+  "input_hash": "9c7a308946ac0594",
+  "cost_usd": 0.000521
+ },
+ "input": {
+  "as_of": "2026-10-19",
+  "brazil_macro": [
+   {
+    "indicator": "Selic target",
+    "value": 13.75,
+    "unit": "% p.a.",
+    "change": 0.0,
+    "date": "2026-10-19"
+   },
+   {
+    "indicator": "IPCA 12m",
+    "value": 4.58,
+    "unit": "% 12m",
+    "change": 0.36,
+    "date": "2026-09-01"
+   },
+   {
+    "indicator": "IPCA m/m",
+    "value": 0.82,
+    "unit": "% m/m",
+    "change": 1.14,
+    "date": "2026-09-01"
+   },
+   {
+    "indicator": "USD/BRL PTAX",
+    "value": 5.06,
+    "unit": "BRL per USD",
+    "change": -0.12,
+    "date": "2026-10-19"
+   },
+   {
+    "indicator": "Unemployment (PNADC)",
+    "value": 5.3,
+    "unit": "% labor force",
+    "change": 0.0,
+    "date": "2026-08-01"
+   },
+   {
+    "indicator": "Real rate (Selic - IPCA 12m)",
+    "value": 9.17,
+    "unit": "pp",
+    "change": null,
+    "date": "2026-10-19"
+   }
+  ],
+  "us_macro": [
+   {
+    "indicator": "Fed funds (effective)",
+    "value": 3.88,
+    "unit": "% p.a.",
+    "change": 0.0,
+    "date": "2026-10-16"
+   },
+   {
+    "indicator": "UST 2y",
+    "value": 4.74,
+    "unit": "%",
+    "change": -0.14,
+    "date": "2026-10-16"
+   },
+   {
+    "indicator": "UST 10y",
+    "value": 5.09,
+    "unit": "%",
+    "change": -0.2,
+    "date": "2026-10-16"
+   },
+   {
+    "indicator": "CPI y/y",
+    "value": 4.02,
+    "unit": "% 12m",
+    "change": 0.31,
+    "date": "2026-09-01"
+   },
+   {
+    "indicator": "Unemployment",
+    "value": 4.2,
+    "unit": "% labor force",
+    "change": 0.1,
+    "date": "2026-09-01"
+   },
+   {
+    "indicator": "Curve 10y - 2y",
+    "value": 0.35,
+    "unit": "pp",
+    "change": null,
+    "date": "2026-10-16"
+   }
+  ],
+  "focus_expectations": [
+   {
+    "indicator": "Focus IPCA",
+    "year": 2026,
+    "median": 5.22,
+    "change_4_weeks": 0.3
+   },
+   {
+    "indicator": "Focus IPCA",
+    "year": 2027,
+    "median": 4.32,
+    "change_4_weeks": 0.02
+   },
+   {
+    "indicator": "Focus Selic (end of year)",
+    "year": 2026,
+    "median": 13.25,
+    "change_4_weeks": -0.25
+   },
+   {
+    "indicator": "Focus Selic (end of year)",
+    "year": 2027,
+    "median": 12.0,
+    "change_4_weeks": 0.0
+   },
+   {
+    "indicator": "Focus USD/BRL (end of year)",
+    "year": 2026,
+    "median": 5.13,
+    "change_4_weeks": -0.07
+   },
+   {
+    "indicator": "Focus USD/BRL (end of year)",
+    "year": 2027,
+    "median": 5.22,
+    "change_4_weeks": -0.05
+   },
+   {
+    "indicator": "Focus GDP",
+    "year": 2026,
+    "median": 1.83,
+    "change_4_weeks": -0.05
+   },
+   {
+    "indicator": "Focus GDP",
+    "year": 2027,
+    "median": 1.32,
+    "change_4_weeks": -0.11
+   }
+  ],
+  "indices_and_fx": [
+   {
+    "name": "Ibovespa",
+    "close": 205079.25,
+    "change_pct": -0.17
+   },
+   {
+    "name": "S&P 500",
+    "close": 7690.73,
+    "change_pct": 0.41
+   },
+   {
+    "name": "Dollar / Real",
+    "close": 5.03,
+    "change_pct": -1.24
+   }
+  ],
+  "top_gainers": [
+   {
+    "ticker": "AMZN",
+    "change_pct": 4.98
+   },
+   {
+    "ticker": "GGBR4",
+    "change_pct": 1.81
+   },
+   {
+    "ticker": "NVDA",
+    "change_pct": 1.38
+   }
+  ],
+  "top_losers": [
+   {
+    "ticker": "PETR4",
+    "change_pct": -2.82
+   },
+   {
+    "ticker": "JPM",
+    "change_pct": -1.82
+   },
+   {
+    "ticker": "ABEV3",
+    "change_pct": -1.66
+   }
+  ],
+  "risk": [
+   {
+    "region": "BR",
+    "highest_volatility": "EMBJ3",
+    "vol_annual_pct": 37.72,
+    "risk_free_pct": 14.58
+   },
+   {
+    "region": "US",
+    "highest_volatility": "NVDA",
+    "vol_annual_pct": 37.28,
+    "risk_free_pct": 3.7
+   }
+  ],
+  "data_quality": []
+ }
+}

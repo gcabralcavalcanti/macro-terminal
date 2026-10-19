@@ -1,0 +1,5 @@
+{"value":[
+{"Indicador":"Câmbio","IndicadorDetalhe":"Fim do ano","Data":"2026-10-16","DataReferencia":"2026","Media":5.14,"Mediana":5.13,"DesvioPadrao":0.1,"Minimo":4.9,"Maximo":5.5,"numeroRespondentes":104,"baseCalculo":0},
+{"Indicador":"Câmbio","IndicadorDetalhe":"Média do ano","Data":"2026-10-16","DataReferencia":"2026","Media":5.30,"Mediana":5.31,"DesvioPadrao":0.1,"Minimo":4.9,"Maximo":5.5,"numeroRespondentes":90,"baseCalculo":0},
+{"Indicador":"Câmbio","IndicadorDetalhe":"Fim do ano","Data":"2026-10-16","DataReferencia":"2026","Media":5.10,"Mediana":5.12,"DesvioPadrao":0.1,"Minimo":4.9,"Maximo":5.5,"numeroRespondentes":40,"baseCalculo":1}
+]}

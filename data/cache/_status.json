@@ -1,0 +1,71 @@
+{
+ "filings": {
+  "attempted_at": "2026-10-19T20:38:06+00:00",
+  "error": null,
+  "fetched_at": "2026-10-19T20:38:06+00:00",
+  "issues": [],
+  "last_date": "2026-10-16",
+  "rows": 59,
+  "source": "CVM open data, IPE (dados.cvm.gov.br)",
+  "status": "live"
+ },
+ "focus": {
+  "attempted_at": "2026-10-19T20:28:14+00:00",
+  "error": null,
+  "fetched_at": "2026-10-19T20:28:14+00:00",
+  "issues": [],
+  "last_date": "2026-10-16",
+  "rows": 464,
+  "source": "BCB Focus survey (olinda.bcb.gov.br)",
+  "status": "live"
+ },
+ "fundamentals": {
+  "attempted_at": "2026-10-19T20:29:48+00:00",
+  "error": null,
+  "fetched_at": "2026-10-19T20:29:48+00:00",
+  "issues": [],
+  "last_date": "2026-06-30",
+  "rows": 224,
+  "source": "CVM open data, ITR/DFP (dados.cvm.gov.br)",
+  "status": "live"
+ },
+ "macro_br": {
+  "attempted_at": "2026-10-19T20:28:12+00:00",
+  "error": null,
+  "fetched_at": "2026-10-19T20:28:12+00:00",
+  "issues": [],
+  "last_date": "2026-10-19",
+  "rows": 3779,
+  "source": "BCB SGS (api.bcb.gov.br)",
+  "status": "live"
+ },
+ "macro_us": {
+  "attempted_at": "2026-10-19T20:28:25+00:00",
+  "error": null,
+  "fetched_at": "2026-10-19T20:28:25+00:00",
+  "issues": [
+   {
+    "level": "warn",
+    "msg": "CPI (index): 1 missing values dropped"
+   },
+   {
+    "level": "warn",
+    "msg": "Unemployment: 1 missing values dropped"
+   }
+  ],
+  "last_date": "2026-10-16",
+  "rows": 5147,
+  "source": "FRED (fred.stlouisfed.org, public CSV)",
+  "status": "live"
+ },
+ "prices": {
+  "attempted_at": "2026-10-19T20:29:47+00:00",
+  "error": null,
+  "fetched_at": "2026-10-19T20:29:47+00:00",
+  "issues": [],
+  "last_date": "2026-10-19",
+  "rows": 8980,
+  "source": "Yahoo Finance (yfinance, unofficial)",
+  "status": "live"
+ }
+}

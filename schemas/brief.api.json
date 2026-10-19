@@ -1,0 +1,11 @@
+{
+  "type": "object",
+  "properties": {
+    "headline": {"type": "string", "description": "One line, at most 120 characters."},
+    "points": {"type": "array", "items": {"type": "string"}, "description": "3 to 5 bullet points, each one or two sentences."},
+    "risks": {"type": "array", "items": {"type": "string"}, "description": "1 to 3 risks to watch."},
+    "data_caveats": {"type": "array", "items": {"type": "string"}, "description": "0 to 3 notes on stale or missing data, taken from data_quality."}
+  },
+  "required": ["headline", "points", "risks", "data_caveats"],
+  "additionalProperties": false
+}
