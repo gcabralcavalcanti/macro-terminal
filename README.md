@@ -17,7 +17,7 @@ stand today, flags what changed, and has an AI write a short daily summary that 
 - Prices and risk for 15 large Brazilian and US stocks, and quarterly results for 7 Brazilian companies taken from
   their official filings.
 - Every download is checked before it is used. On the first run the checks caught a month missing from the US
-  inflation data and a Brazilian stock whose ticker had changed ([data status](docs/screenshots/status.png)).
+  inflation data and a Brazilian stock whose trading code had changed ([data status](docs/screenshots/status.png)).
 - The AI summary costs less than a tenth of a US cent and every number in it is confirmed against the data
   ([example](docs/screenshots/brief.png)).
 
@@ -28,27 +28,36 @@ pip install -r requirements.txt
 python demo.py
 ```
 
-Builds the page and opens it in your browser. Runs without an API key, replaying recorded answers. Set
-`ANTHROPIC_API_KEY` to call Claude live. `python demo.py --refresh` downloads today's data first.
+Builds the page and opens it in your browser. Runs without an API key (the password that lets a program use
+Claude), replaying recorded answers. Set `ANTHROPIC_API_KEY` to call Claude live. `python demo.py --refresh` downloads today's data first.
 
 Tabs: overview, price chart, company results, risk, AI summary, questions, weekly newsletter, data status.
 Keys `1`–`8` switch tabs.
 
 ## How it works
 
-1. Downloads public data: Brazil's central bank, the US Federal Reserve (FRED), stock prices, and company filings.
+1. Downloads public data: Brazil's central bank, the US Federal Reserve's public database (FRED), stock prices, and company filings.
 2. Checks each download for gaps, wrong dates and wrong units. If a source fails, the page keeps the last good
    copy and says so.
 3. Computes the tables, charts and risk numbers, and raises alerts from fixed rules (for example, inflation above
    the official target band).
 4. Sends the day's numbers to Claude, which writes the summary and answers a few preset questions. The code rejects
    any answer that contains a number not found in the data.
-5. Writes a static web page and a weekly newsletter. A scheduled GitHub job repeats this every weekday.
+5. Writes the web page (a single page that needs no server) and a weekly newsletter. GitHub repeats all of this
+   automatically every weekday and publishes the page.
 
-Automation around it: the GitHub job can also be started by a webhook (one POST to the GitHub API), an n8n flow in
-`docs/n8n/` starts it every Monday and sends the summary to Telegram, and the page publishes a small `latest.json`
-that other tools can read. A `Dockerfile` (tests and page build) and a CI job that builds it are included. How
-to operate all of this, and what to do when a source or the publishing step fails, is in [RUNBOOK.md](RUNBOOK.md).
+Other ways to run it:
+
+- **From another program:** a webhook (a web address that starts the update when another program calls it) lets
+  any tool trigger a refresh.
+- **Weekly message:** a ready-made workflow for n8n, a visual automation tool, starts the update every Monday and
+  sends the summary to a Telegram chat (`docs/n8n/`).
+- **Readable by other tools:** the page also publishes a small file, `latest.json`, with the date, the summary and
+  the alerts.
+- **In a container:** a `Dockerfile` packages the program with everything it needs, so it runs the same way on any
+  machine; GitHub rebuilds it and runs the tests on every change.
+
+How to operate all of this, and what to do when a source or the publishing step fails, is in [RUNBOOK.md](RUNBOOK.md).
 
 ## Data
 
