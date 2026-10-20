@@ -45,6 +45,11 @@ Keys `1`–`8` switch tabs.
    any answer that contains a number not found in the data.
 5. Writes a static web page and a weekly newsletter. A scheduled GitHub job repeats this every weekday.
 
+Automation around it: the GitHub job can also be started by a webhook (one POST to the GitHub API), an n8n flow in
+`docs/n8n/` starts it every Monday and sends the summary to Telegram, and the page publishes a small `latest.json`
+that other tools can read. A `Dockerfile` (tests and page build) and a CI job that builds it are included. How
+to operate all of this, and what to do when a source or the publishing step fails, is in [RUNBOOK.md](RUNBOOK.md).
+
 ## Data
 
 Public sources only: Banco Central do Brasil (rates, inflation, exchange rate, market expectations), FRED (US data),

@@ -17,6 +17,20 @@ def load_brief(path: Path = BRIEF_FILE) -> dict | None:
     return json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
 
 
+def latest(data: dict) -> dict:
+    """Small machine-readable summary published next to the page (read by the n8n flow)."""
+    brief = data.get("brief") or {}
+    return {
+        "generated_at": data.get("generated_at"),
+        "as_of": data.get("as_of"),
+        "brief_date": brief.get("date"),
+        "headline": (brief.get("brief") or {}).get("headline"),
+        "points": (brief.get("brief") or {}).get("points", []),
+        "alerts": [a["text"] for a in data.get("alerts", [])],
+        "stale_sources": [k for k, v in (data.get("status") or {}).items() if v.get("status") != "live"],
+    }
+
+
 def build(
     out: Path = config.SITE,
     today: date | None = None,
@@ -42,4 +56,5 @@ def build(
     js = "window.TERMINAL = " + json.dumps(data, ensure_ascii=False, separators=(",", ":"), allow_nan=False) + ";\n"
     (out / "data.js").write_text(js, encoding="utf-8")
     (out / ".nojekyll").write_text("", encoding="utf-8")
+    (out / "latest.json").write_text(json.dumps(latest(data), ensure_ascii=False, indent=1), encoding="utf-8")
     return out / "index.html"

@@ -116,3 +116,10 @@ def test_brief_without_key_uses_latest_recording(cache_dir, today, tmp_path, fak
     (cache_dir / "prices.csv").write_text((cache_dir / "prices.csv").read_text().replace(",100.0", ",101.0", 1))
     res = run_brief("demo", today, tmp_path / "b.json", recordings=rec, cache_root=cache_dir)
     assert res["brief"]["headline"] == "Markets quiet" and res["meta"]["mode"].startswith("recorded")
+
+
+def test_latest_json_for_automation(cache_dir, today, tmp_path):
+    out = tmp_path / "site"
+    build.build(out, today, cache_dir, brief_path=tmp_path / "none.json", ask_path=tmp_path / "none.json")
+    latest = json.loads((out / "latest.json").read_text(encoding="utf-8"))
+    assert latest["as_of"] == "2026-10-19" and isinstance(latest["alerts"], list) and latest["stale_sources"] == []

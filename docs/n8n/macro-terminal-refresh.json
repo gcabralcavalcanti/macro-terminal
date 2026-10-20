@@ -1,0 +1,146 @@
+{
+  "name": "Macro Terminal: weekly refresh and Telegram alert",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [1],
+              "triggerAtHour": 20
+            }
+          ]
+        }
+      },
+      "id": "0b7a0f3e-1d1a-4b7e-9c11-2f0c8d1a0001",
+      "name": "Every Monday 20:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "macro-terminal-refresh",
+        "options": {}
+      },
+      "id": "0b7a0f3e-1d1a-4b7e-9c11-2f0c8d1a0002",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 200],
+      "webhookId": "5d2f6c1e-8a43-4f0b-b9d7-3e1a2c4b5d60"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.github.com/repos/gcabralcavalcanti/macro-terminal/dispatches",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"event_type\": \"refresh\", \"client_payload\": {\"brief\": true}}",
+        "options": {}
+      },
+      "id": "0b7a0f3e-1d1a-4b7e-9c11-2f0c8d1a0003",
+      "name": "Start GitHub run",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [240, 100],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "github-token",
+          "name": "GitHub token (macro-terminal)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 15,
+        "unit": "minutes"
+      },
+      "id": "0b7a0f3e-1d1a-4b7e-9c11-2f0c8d1a0004",
+      "name": "Wait for the run",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [480, 100],
+      "webhookId": "7a1c2e3f-4b5d-4e6f-8a9b-0c1d2e3f4a5b"
+    },
+    {
+      "parameters": {
+        "url": "https://gcabralcavalcanti.github.io/macro-terminal/latest.json",
+        "options": {}
+      },
+      "id": "0b7a0f3e-1d1a-4b7e-9c11-2f0c8d1a0005",
+      "name": "Read published summary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [720, 100]
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $input.first().json;\nconst age = (Date.now() - Date.parse(s.generated_at)) / 3600000;\nconst lines = [];\nif (!(age < 2)) lines.push(`WARNING: the page was not rebuilt (last build ${s.generated_at}). Check GitHub Actions.`);\nlines.push(`Macro Terminal ${s.as_of}`);\nif (s.headline) lines.push(s.headline);\nfor (const a of s.alerts || []) lines.push(`- ${a}`);\nif ((s.stale_sources || []).length) lines.push(`Stale sources: ${s.stale_sources.join(', ')}`);\nlines.push('https://gcabralcavalcanti.github.io/macro-terminal/');\nreturn [{ json: { message: lines.join('\\n'), fresh: age < 2 } }];"
+      },
+      "id": "0b7a0f3e-1d1a-4b7e-9c11-2f0c8d1a0006",
+      "name": "Write the message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [960, 100]
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "text": "={{ $json.message }}",
+        "additionalFields": {}
+      },
+      "id": "0b7a0f3e-1d1a-4b7e-9c11-2f0c8d1a0007",
+      "name": "Send to Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1200, 100],
+      "webhookId": "9c8b7a6f-5e4d-4c3b-2a19-0f8e7d6c5b4a",
+      "credentials": {
+        "telegramApi": {
+          "id": "telegram-bot",
+          "name": "Telegram bot"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Every Monday 20:00": {
+      "main": [[{ "node": "Start GitHub run", "type": "main", "index": 0 }]]
+    },
+    "Webhook": {
+      "main": [[{ "node": "Start GitHub run", "type": "main", "index": 0 }]]
+    },
+    "Start GitHub run": {
+      "main": [[{ "node": "Wait for the run", "type": "main", "index": 0 }]]
+    },
+    "Wait for the run": {
+      "main": [[{ "node": "Read published summary", "type": "main", "index": 0 }]]
+    },
+    "Read published summary": {
+      "main": [[{ "node": "Write the message", "type": "main", "index": 0 }]]
+    },
+    "Write the message": {
+      "main": [[{ "node": "Send to Telegram", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo"
+  },
+  "pinData": {}
+}
