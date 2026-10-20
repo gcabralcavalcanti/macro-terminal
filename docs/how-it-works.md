@@ -1,5 +1,17 @@
 # How it works
 
+## How I use it
+
+I built this in October 2026, so what follows is how it is set up and how I plan to use it, not a long habit yet.
+
+- **On its own:** once the page is published, GitHub refreshes the data every weekday at 19:30 Brasília time, after
+  the markets close. The AI summary and the preset answers are rewritten only on Mondays, to keep the cost near zero;
+  on the other days the page shows Monday's text with its date. The program writes only to the page, so nothing waits
+  for my approval.
+- **If I turn it on:** the n8n workflow starts the Monday run and sends me the summary and the alerts on Telegram.
+- **What I plan to do:** open the page before studying or discussing the macro picture, look at the alerts first, and,
+  on my computer, ask the ASK tab about a specific number.
+
 ## The steps
 
 1. **Download** public data: Brazil's central bank (rates, inflation, exchange rate, unemployment and the weekly
@@ -14,8 +26,8 @@
    correlations), quarterly company results, and alerts from fixed rules: a change in the Selic or the Fed's rate,
    inflation outside Brazil's 1.5% to 4.5% target band, a move of 2% or more in the dollar or an index, 5% or more in a
    stock. The alerts use no AI.
-4. **Write** with Claude: the code picks every number and sends them to the model, which writes the daily summary and
-   answers a few preset questions. The answer must follow a fixed format, cite only series that exist, and contain no
+4. **Write** with Claude: the code picks every number and sends them to the model, which writes the summary and
+   answers a few preset questions. This happens on Mondays; the other days the page shows Monday's text with its date. The answer must follow a fixed format, cite only series that exist, and contain no
    number missing from the data; otherwise it is asked once more and then dropped.
 5. **Publish** a single page that needs no server (the data is embedded in it), a weekly newsletter in Markdown and
    HTML with three charts, and `latest.json`, a small file with the date, the summary and the alerts.

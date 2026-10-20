@@ -30,7 +30,8 @@ Runs without an API key, replaying recorded answers. Set `ANTHROPIC_API_KEY` to 
 
 ## More
 
-- [How it works](docs/how-it-works.md): the steps, the checks, the data sources and the command line.
+- [How I use it and how it works](docs/how-it-works.md): what runs on its own, the steps, the checks, the data
+  sources and the command line.
 - [Runbook](RUNBOOK.md): updating, publishing, automation and what to do when something breaks.
 
 ## Limits

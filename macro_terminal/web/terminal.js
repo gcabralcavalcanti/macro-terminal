@@ -320,7 +320,7 @@
     const b = D.brief;
     if (!b || !b.brief) { v.innerHTML = '<div class="dim">No AI brief yet. Run <code>python -m macro_terminal brief</code>.</div>'; return; }
     const x = b.brief, m = b.meta || {};
-    let h = `<div class="sec-h">AI DAILY BRIEF · ${esc(b.date)} <span class="dim">${esc(m.mode === "live" ? "written today by the API" : "recorded answer (" + (m.recorded_at || "").slice(0, 10) + ")")}</span></div>`;
+    let h = `<div class="sec-h">AI BRIEF · ${esc(b.date)} <span class="dim">${esc(m.mode === "live" ? "written today by the API" : "recorded answer (" + (m.recorded_at || "").slice(0, 10) + ")")}</span></div>`;
     h += `<div class="headline">${esc(x.headline)}</div><ol class="points">${x.points.map((p) => `<li>${esc(p)}</li>`).join("")}</ol>`;
     h += `<div class="sec-h">RISKS TO WATCH</div><ul class="risks">${x.risks.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>`;
     if (x.data_caveats && x.data_caveats.length) h += `<div class="sec-h">DATA CAVEATS</div><ul class="issues">${x.data_caveats.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>`;
@@ -370,7 +370,7 @@
   function viewNews(v) {
     const eds = D.newsletters || [];
     if (!eds.length) { v.innerHTML = '<div class="dim">No editions yet. Run <code>python -m macro_terminal newsletter</code>.</div>'; return; }
-    let h = `<div class="sec-h">EDITIONS <span class="dim">every Monday · AI brief + 3 charts + the week's numbers</span></div>`;
+    let h = `<div class="sec-h">EDITIONS <span class="dim">one edition per week · AI brief + 3 charts + the week's numbers</span></div>`;
     h += eds.map((x) => `<div class="ed"><span class="amber">${esc(x.week)}</span><span>${esc(x.headline)}</span><span><a href="${esc(x.html)}" target="_blank" rel="noopener">HTML</a> · <a href="${esc(x.md)}" target="_blank" rel="noopener">MD</a></span></div>`).join("");
     h += `<iframe class="newsframe" src="${esc(eds[0].html)}" title="Latest edition"></iframe>`;
     v.innerHTML = h;

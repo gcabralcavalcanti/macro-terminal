@@ -53,7 +53,7 @@ the alerts and any source that failed. Other tools can read it.
 | Piece | What it does | Where |
 |---|---|---|
 | Webhook | a web address that starts the update when another program calls it (the `curl` above) | `.github/workflows/update.yml` |
-| n8n workflow | n8n is a visual automation tool; this workflow starts the update every Monday and sends the summary to Telegram | [docs/n8n/](docs/n8n/README.md) |
+| n8n workflow | n8n is a visual automation tool; once imported, with its credentials added and turned on, this workflow starts the update every Monday and sends the summary to Telegram | [docs/n8n/](docs/n8n/README.md) |
 | `latest.json` | a small file published with the page: date, summary, alerts, failed sources | the live page |
 | Docker | packages the program with everything it needs; GitHub builds the image and runs the tests in it on every push | `Dockerfile`, `.github/workflows/ci.yml` |
 

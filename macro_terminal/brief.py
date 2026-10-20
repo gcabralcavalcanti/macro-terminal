@@ -1,4 +1,4 @@
-"""Daily brief: the code picks the numbers, the model writes about them, and any number not in the input
+"""Brief: the code picks the numbers, the model writes about them, and any number not in the input
 is rejected. Without a key or on failure, the latest recorded brief is shown."""
 
 from __future__ import annotations

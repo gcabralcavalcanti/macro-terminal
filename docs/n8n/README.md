@@ -1,6 +1,7 @@
 # n8n flow: weekly refresh and Telegram alert
 
-`macro-terminal-refresh.json` is an n8n workflow. Every Monday at 20:00 (or when its webhook is called) it:
+`macro-terminal-refresh.json` is an n8n workflow. It does nothing until you import it, add the credentials and turn
+it on (below). Then, every Monday at 20:00 (or when its webhook is called), it:
 
 1. asks GitHub to start the `update` job of this repository (the same POST shown in `RUNBOOK.md`);
 2. waits 15 minutes for the job to finish;
