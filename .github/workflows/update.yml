@@ -12,6 +12,8 @@
 name: update
 
 on:
+  push:
+    branches: [main]   # the first push after Pages is turned on publishes the page without a manual run
   schedule:
     - cron: "30 22 * * 1-5"   # 22:30 UTC = 19:30 in Brasilia, after the B3 and US closes
   workflow_dispatch:

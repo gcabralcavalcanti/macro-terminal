@@ -46,6 +46,16 @@ the alerts and any source that failed. Other tools can read it.
 1. **Settings → Pages → Build and deployment → Source: GitHub Actions.**
 2. Optional: **Settings → Secrets and variables → Actions → New repository secret**, name `ANTHROPIC_API_KEY`.
 3. **Actions → update → Run workflow.** The page appears at https://gcabralcavalcanti.github.io/macro-terminal/.
+   Any later push to `main` also publishes it.
+
+## Automation
+
+| Piece | What it does | Where |
+|---|---|---|
+| Webhook | a web address that starts the update when another program calls it (the `curl` above) | `.github/workflows/update.yml` |
+| n8n workflow | n8n is a visual automation tool; this workflow starts the update every Monday and sends the summary to Telegram | [docs/n8n/](docs/n8n/README.md) |
+| `latest.json` | a small file published with the page: date, summary, alerts, failed sources | the live page |
+| Docker | packages the program with everything it needs; GitHub builds the image and runs the tests in it on every push | `Dockerfile`, `.github/workflows/ci.yml` |
 
 ## When something breaks
 
