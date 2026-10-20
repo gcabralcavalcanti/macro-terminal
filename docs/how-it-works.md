@@ -6,7 +6,7 @@ I built this in October 2026, so what follows is how it is set up and how I plan
 
 - **On its own:** once the page is published, GitHub refreshes the data every weekday at 19:30 Brasília time, after
   the markets close. The AI summary and the preset answers are rewritten only on Mondays, to keep the cost near zero;
-  on the other days the page shows Monday's text with its date. The program writes only to the page, so nothing waits
+  on the other days the page shows Monday's text with its date. One setting (`AI_DAILY`) makes it daily instead. The program writes only to the page, so nothing waits
   for my approval.
 - **If I turn it on:** the n8n workflow starts the Monday run and sends me the summary and the alerts on Telegram.
 - **What I plan to do:** open the page before studying or discussing the macro picture, look at the alerts first, and,
