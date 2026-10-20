@@ -123,3 +123,14 @@ def test_latest_json_for_automation(cache_dir, today, tmp_path):
     build.build(out, today, cache_dir, brief_path=tmp_path / "none.json", ask_path=tmp_path / "none.json")
     latest = json.loads((out / "latest.json").read_text(encoding="utf-8"))
     assert latest["as_of"] == "2026-10-19" and isinstance(latest["alerts"], list) and latest["stale_sources"] == []
+
+
+def test_empty_key_means_demo(monkeypatch, tmp_path):
+    from macro_terminal import llm
+
+    (tmp_path / ".env").write_text("ANTHROPIC_API_KEY=from-dotenv\n", encoding="utf-8")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "")
+    assert llm.load_key(tmp_path) is None  # no fallback to .env or the Windows registry
+    assert llm.LLM("auto", recordings=tmp_path, log_dir=tmp_path).mode == "demo"
+    monkeypatch.delenv("ANTHROPIC_API_KEY")
+    assert llm.load_key(tmp_path) == "from-dotenv"
