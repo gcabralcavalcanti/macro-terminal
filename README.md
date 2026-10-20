@@ -2,6 +2,8 @@
 
 A one-page dashboard, styled like a trading terminal, that shows where the Brazilian and US economies and markets
 stand today, flags what changed, and has an AI write a short summary that is checked against the data.
+The plan is for it to become the central panel of my day: alongside markets, the news I turn into study cards,
+job openings and my goals, in a private version. This repository is the public, markets part.
 
 ![Public data only](https://img.shields.io/badge/data-public%20only-2ea44f)
 ![Built with AI assistance](https://img.shields.io/badge/built%20with-AI%20assistance-6f42c1)
